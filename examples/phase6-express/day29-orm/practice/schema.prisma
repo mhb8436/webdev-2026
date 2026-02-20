@@ -1,0 +1,64 @@
+// Prisma 스키마 정답
+// 이 파일을 prisma/schema.prisma에 복사한 후
+// npx prisma migrate dev --name init 실행
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ============================================
+// 문제 1: 블로그 Post 모델
+// ============================================
+model Post {
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  published  Boolean  @default(false)
+  authorName String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ============================================
+// 문제 2: User-Post 1:N 관계
+// (문제 1의 Post와 별도로, 관계 연습용)
+// ============================================
+model User {
+  id    Int     @id @default(autoincrement())
+  name  String
+  email String  @unique
+  articles Article[]
+}
+
+model Article {
+  id       Int    @id @default(autoincrement())
+  title    String
+  content  String
+  authorId Int
+  author   User   @relation(fields: [authorId], references: [id])
+}
+
+// ============================================
+// 문제 3: Product-Category 관계 + 쿼리 연습
+// ============================================
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id         Int      @id @default(autoincrement())
+  name       String
+  price      Int
+  category   String
+  inStock    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  categoryId Int?
+  categoryRel Category? @relation(fields: [categoryId], references: [id])
+}

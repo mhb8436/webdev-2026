@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// TODO: Todo 모델 정의
+// 힌트: 아래 주석을 해제하고 마이그레이션을 실행하세요
+// model Todo {
+//   id        Int      @id @default(autoincrement())
+//   title     String
+//   done      Boolean  @default(false)
+//   priority  String   @default("medium")
+//   category  String?
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }

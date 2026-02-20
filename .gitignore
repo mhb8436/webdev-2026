@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+.claude/
+사전학습가이드/
+사전학습_안내서.md

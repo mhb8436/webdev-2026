@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// TODO: User 모델 추가
+// model User {
+//   id        Int      @id @default(autoincrement())
+//   username  String   @unique
+//   email     String   @unique
+//   password  String
+//   createdAt DateTime @default(now())
+//   todos     Todo[]
+// }
+
+model Todo {
+  id        Int      @id @default(autoincrement())
+  title     String
+  done      Boolean  @default(false)
+  priority  String   @default("medium")
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // TODO: User와의 관계 추가
+  // userId    Int
+  // user      User     @relation(fields: [userId], references: [id])
+}
