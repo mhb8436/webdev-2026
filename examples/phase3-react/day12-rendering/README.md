@@ -1,124 +1,116 @@
-# Day 12: 완료 체크와 필터 (4/17)
+# Day 12 - 필터링, 검색, 정렬, 렌더링 최적화
+
+> **Phase 3: React** | 학습일: 12일차
+
+---
 
 ## 학습 목표
-- 조건부 렌더링 (`&&` 연산자, 삼항 연산자) 이해하기
-- 리스트 렌더링에서 `key`의 역할 이해하기
-- `filter()` 메서드를 활용한 데이터 필터링
 
-## 문제 정의
-> "할일 완료/미완료 토글과 상태별 필터를 만들자"
+- 필터/검색/정렬을 조합한 데이터 처리를 구현한다
+- `useMemo`로 계산 비용이 큰 연산을 최적화한다
+- 조건부 렌더링 패턴을 능숙하게 활용한다
+- 리스트에서 `key`의 역할을 깊이 이해한다
 
-Day 11에서 만든 할일 앱에 완료 상태 표시와 필터 기능을 추가합니다.
-사용자가 할일의 완료 여부를 체크하고, 전체/진행중/완료 상태별로 목록을 필터링할 수 있습니다.
+---
 
 ## 핵심 개념
 
-### 1. 조건부 렌더링
-
-React에서 조건에 따라 다른 UI를 보여주는 방법입니다.
-
-#### && 연산자 (단축 평가)
-조건이 참일 때만 오른쪽 요소를 렌더링합니다.
+### 1. 필터 + 검색 + 정렬 조합
 
 ```tsx
-{/* 할일이 없을 때만 메시지 표시 */}
-{todos.length === 0 && <p>할일이 없습니다</p>}
+const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+const [searchQuery, setSearchQuery] = useState("");
+const [sortBy, setSortBy] = useState<"name" | "price">("name");
+
+const filteredProducts = useMemo(() => {
+  let result = products;
+
+  // 1. 카테고리 필터
+  if (filter !== "all") {
+    result = result.filter(p => p.category === filter);
+  }
+
+  // 2. 검색
+  if (searchQuery) {
+    result = result.filter(p =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+
+  // 3. 정렬
+  result = [...result].sort((a, b) =>
+    sortBy === "price" ? a.price - b.price : a.name.localeCompare(b.name)
+  );
+
+  return result;
+}, [products, filter, searchQuery, sortBy]);
 ```
 
-#### 삼항 연산자
-조건에 따라 두 가지 중 하나를 렌더링합니다.
+### 2. useMemo
+
+의존성이 변경될 때만 재계산합니다.
 
 ```tsx
-{/* 완료 상태에 따라 다른 스타일 적용 */}
-<span style={{ textDecoration: todo.done ? 'line-through' : 'none' }}>
-  {todo.title}
-</span>
+// 비용이 큰 계산을 메모이제이션
+const statistics = useMemo(() => ({
+  total: todos.length,
+  completed: todos.filter(t => t.done).length,
+  averageScore: scores.reduce((a, b) => a + b, 0) / scores.length,
+}), [todos, scores]);
 ```
 
-### 2. 리스트와 key
-
-React에서 배열을 렌더링할 때 각 항목에 고유한 `key`를 부여해야 합니다.
-`key`는 React가 어떤 항목이 변경, 추가, 삭제되었는지 효율적으로 파악하는 데 사용됩니다.
+### 3. 정렬 가능한 테이블
 
 ```tsx
-{todos.map(todo => (
-  <TodoItem key={todo.id} todo={todo} />  {/* id를 key로 사용 */}
-))}
+const [sortKey, setSortKey] = useState<"name" | "score">("name");
+const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+const handleSort = (key: typeof sortKey) => {
+  if (key === sortKey) {
+    setSortDir(d => d === "asc" ? "desc" : "asc");  // 방향 토글
+  } else {
+    setSortKey(key);
+    setSortDir("asc");
+  }
+};
 ```
 
-> 주의: 배열 인덱스를 key로 사용하면 항목의 순서가 바뀔 때 문제가 발생할 수 있습니다.
+---
 
-### 3. filter()를 활용한 필터링
+## 실습 파일
 
-`filter()` 메서드는 조건을 만족하는 요소만 모아 새 배열을 반환합니다.
+### starter/ (직접 구현)
 
-```tsx
-// 필터 상태에 따라 할일 목록 필터링
-const filteredTodos = todos.filter(todo => {
-  if (filter === 'active') return !todo.done;    // 미완료만
-  if (filter === 'completed') return todo.done;   // 완료만
-  return true;                                     // 전체
-});
-```
+| 파일 | 내용 |
+|------|------|
+| `src/App.tsx` | 할일 필터(전체/진행중/완료), 통계 |
+| `src/components/FilterableList.tsx` | 상품 목록 검색/카테고리 필터/정렬/재고 필터 |
 
-## 프로젝트 구조
+### practice/ (연습 문제)
 
-```
-starter/
-├── src/
-│   ├── components/
-│   │   ├── TodoForm.tsx      # 할일 입력 폼 (Day 11 완성본)
-│   │   ├── TodoItem.tsx      # 할일 항목 (Day 11 완성본)
-│   │   ├── TodoList.tsx      # 할일 목록 (Day 11 완성본)
-│   │   └── TodoFilter.tsx    # 필터 버튼 (TODO)
-│   ├── types/
-│   │   └── todo.ts           # 타입 정의 (FilterType 추가)
-│   ├── App.tsx               # 메인 앱 (TODO)
-│   ├── App.css               # 스타일
-│   └── main.tsx              # 진입점
-├── index.html
-├── package.json
-├── tsconfig.json
-└── vite.config.ts
-```
+| 파일 | 내용 |
+|------|------|
+| `practice-extra.tsx` | 정렬 가능한 테이블, 무한 스크롤, 디바운스 검색 |
+| `solution-extra.tsx` | 풀이 (IntersectionObserver, useMemo 활용) |
 
-## 실습 단계
-
-### 단계 1: 필터링된 할일 목록 계산하기
-`App.tsx`에서 `filter` 상태값에 따라 `filteredTodos`를 계산합니다.
-
-### 단계 2: TodoFilter 컴포넌트 완성하기
-`TodoFilter.tsx`에서 전체/진행중/완료 3개 버튼을 만들고, 현재 선택된 필터에 `active` 클래스를 추가합니다.
-
-### 단계 3: 통계 표시하기
-완료된 할일 수와 전체 할일 수를 화면에 표시합니다.
-
-### 단계 4: 조건부 렌더링 적용하기
-할일이 없을 때 "할일이 없습니다" 메시지를 표시합니다.
-
-### 단계 5: 완료 상태 시각적 표현
-체크박스와 취소선으로 완료된 할일을 구분합니다.
+---
 
 ## 실행 방법
 
 ```bash
-cd starter  # 또는 cd solution
-npm install
-npm run dev
+cd starter && npm install && npm run dev
 ```
 
-브라우저에서 `http://localhost:5173`으로 접속합니다.
+---
 
-## 완성 화면 기능
-- 할일 추가/삭제/토글 (Day 11 기능 유지)
-- 체크박스로 완료 상태 토글
-- 완료된 할일에 취소선 표시
-- 전체/진행중/완료 필터 버튼
-- 선택된 필터에 하이라이트 스타일
-- 완료/전체 통계 표시
-- 할일이 없을 때 안내 메시지 표시
+## 정리
 
-## 심화 학습
-- `useMemo`를 사용하여 `filteredTodos` 계산을 최적화해 보세요
-- 필터 버튼 대신 탭(Tab) UI로 변경해 보세요
-- 완료된 할일 일괄 삭제 기능을 추가해 보세요
+| 개념 | 핵심 |
+|------|------|
+| 필터링 | `filter()`로 조건에 맞는 데이터만 |
+| 검색 | `includes()` + `toLowerCase()` |
+| 정렬 | `sort()` + `localeCompare`(문자열) / `a - b`(숫자) |
+| useMemo | 의존성 변경 시에만 재계산 |
+| key | 리스트 항목의 고유 식별자 |
+
+> **다음 시간**: Day 13 - useEffect, 커스텀 훅

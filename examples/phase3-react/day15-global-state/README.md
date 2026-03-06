@@ -1,24 +1,18 @@
-# Day 15 - 전역 상태와 프로젝트 정리 (Context API)
+# Day 15 - Context API: 전역 상태 관리
+
+> **Phase 3: React** | 학습일: 15일차
+
+---
 
 ## 학습 목표
 
-- `Context API`의 개념과 필요성 이해
-- `createContext`, `useContext`로 전역 상태 관리
-- `Provider` 패턴으로 데이터 공유
-- 커스텀 훅(`useTodos`)으로 Context 사용 단순화
-- 프로젝트 폴더 구조 정리
+- Props Drilling 문제를 이해한다
+- `createContext`, `useContext`로 전역 상태를 관리한다
+- Provider 패턴으로 데이터를 공유한다
+- 커스텀 훅(`useTodos`, `useTheme`)으로 Context 사용을 단순화한다
+- 테마(다크모드) 전환을 구현한다
 
-## 문제 상황
-
-> "어느 페이지에서든 할일 데이터를 공유하자"
-
-Day 14에서 라우터를 추가했지만, 상태(todos)와 핸들러(handleAdd, handleToggle 등)를
-App.tsx에서 각 페이지로 props로 전달하고 있습니다.
-
-이 방식의 문제점:
-- App.tsx가 모든 상태와 핸들러를 관리해야 해서 복잡해짐
-- 새 페이지를 추가할 때마다 props를 계속 전달해야 함
-- 컴포넌트 깊이가 깊어지면 **props drilling** 문제 발생
+---
 
 ## 핵심 개념
 
@@ -26,167 +20,119 @@ App.tsx에서 각 페이지로 props로 전달하고 있습니다.
 
 ```
 App (todos 상태)
-  -> HomePage (props로 전달)
-    -> TodoList (props로 전달)
-      -> TodoItem (여기서 사용)
+  → Layout (props 전달만)
+    → Sidebar (props 전달만)
+      → TodoList (여기서 사용)
 ```
 
-컴포넌트가 깊어질수록 중간 컴포넌트들이 사용하지 않는 props를 전달만 해야 합니다.
+> 중간 컴포넌트가 사용하지 않는 props를 전달만 해야 하는 문제
 
-### 2. Context API
-
-React에 내장된 전역 상태 관리 도구입니다.
-Provider로 감싼 하위 컴포넌트 어디서든 데이터에 접근할 수 있습니다.
-
-```
-TodoProvider (Context에 todos 저장)
-  -> App
-    -> HomePage (useTodos()로 직접 접근)
-    -> CompletedPage (useTodos()로 직접 접근)
-    -> StatsPage (useTodos()로 직접 접근)
-```
-
-### 3. Context 만드는 3단계
-
-#### 1단계: Context 생성
+### 2. Context API 3단계
 
 ```tsx
-import { createContext } from 'react';
+// 1단계: Context 생성
+const ThemeContext = createContext<ThemeContextType | null>(null);
 
-// Context 객체 생성 (기본값은 null)
-const TodoContext = createContext<TodoContextType | null>(null);
-```
+// 2단계: Provider 컴포넌트
+function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const toggleTheme = () => setTheme(t => t === "light" ? "dark" : "light");
 
-#### 2단계: Provider 컴포넌트 만들기
-
-```tsx
-export function TodoProvider({ children }: { children: ReactNode }) {
-  const [todos, setTodos] = useState<Todo[]>([]);
-
-  // 모든 상태와 핸들러를 value로 전달
   return (
-    <TodoContext.Provider value={{ todos, addTodo, toggleTodo, deleteTodo }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
-    </TodoContext.Provider>
+    </ThemeContext.Provider>
   );
 }
-```
 
-#### 3단계: 커스텀 훅으로 사용
-
-```tsx
-export function useTodos() {
-  const context = useContext(TodoContext);
-  if (!context) {
-    throw new Error('useTodos는 TodoProvider 안에서만 사용할 수 있습니다');
-  }
+// 3단계: 커스텀 훅
+function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error("useTheme은 ThemeProvider 안에서만 사용 가능");
   return context;
 }
 ```
 
-### 4. Provider 패턴
-
-Provider로 앱을 감싸면 하위 모든 컴포넌트에서 Context에 접근 가능합니다.
+### 3. Provider로 앱 감싸기
 
 ```tsx
 // main.tsx
-<TodoProvider>
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>
-</TodoProvider>
+<ThemeProvider>
+  <TodoProvider>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </TodoProvider>
+</ThemeProvider>
 ```
 
-### 5. 프로젝트 폴더 구조
+### 4. 어디서든 사용
 
-```
-src/
-  main.tsx              - 앱 진입점 (Provider, Router 설정)
-  App.tsx               - Routes만 정의 (깔끔!)
-  components/           - 재사용 가능한 UI 컴포넌트
-    TodoForm.tsx
-    TodoItem.tsx
-    TodoList.tsx
-    TodoFilter.tsx
-    Navbar.tsx
-  contexts/             - Context 정의 및 Provider
-    TodoContext.tsx
-  hooks/                - 커스텀 훅
-    useTodos.ts
-  pages/                - 페이지 컴포넌트
-    HomePage.tsx
-    CompletedPage.tsx
-    StatsPage.tsx
-  types/                - TypeScript 타입 정의
-    todo.ts
+```tsx
+function Header() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <header style={{ background: theme === "dark" ? "#333" : "#fff" }}>
+      <button onClick={toggleTheme}>
+        {theme === "dark" ? "라이트 모드" : "다크 모드"}
+      </button>
+    </header>
+  );
+}
+
+function TodoPage() {
+  const { todos, addTodo, toggleTodo, deleteTodo } = useTodos();
+  // Props 전달 없이 직접 접근!
+}
 ```
 
-## 실습 단계
+---
 
-### 1단계: TodoContext 만들기
-`contexts/TodoContext.tsx`에서 Context를 생성하고 TodoProvider를 구현하세요.
+## 실습 파일
 
-### 2단계: useTodos 커스텀 훅 만들기
-`hooks/useTodos.ts`에서 Context를 쉽게 사용할 수 있는 훅을 만드세요.
+### starter/ (직접 구현)
 
-### 3단계: main.tsx에서 Provider 설정
-TodoProvider로 앱 전체를 감싸세요.
+| 파일 | 내용 |
+|------|------|
+| `src/context/ThemeContext.tsx` | 테마 Context/Provider/Hook |
+| `src/contexts/TodoContext.tsx` | 할일 Context/Provider |
+| `src/hooks/useTodos.ts` | 할일 커스텀 훅 |
+| `src/App.tsx` | Routes만 남긴 깔끔한 구조 |
 
-### 4단계: 페이지 컴포넌트 수정
-props 대신 `useTodos()`를 사용하도록 모든 페이지를 수정하세요.
+### practice/ (연습 문제)
 
-### 5단계: App.tsx 정리
-App.tsx에서 상태 관리 코드를 제거하고 Routes만 남기세요.
+| 파일 | 내용 |
+|------|------|
+| `App.tsx` | Context 적용 연습 |
+
+---
 
 ## Before vs After
 
-### Before (Day 14 방식)
-```tsx
-// App.tsx - 상태 + 핸들러 + 라우팅 모두 담당
-function App() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const handleAdd = (title: string) => { /* ... */ };
-  // ... 핸들러들
+| 항목 | Before (Props) | After (Context) |
+|------|---------------|-----------------|
+| App.tsx | 상태 + 핸들러 + 라우팅 | 라우팅만 |
+| 페이지 | `props`로 데이터 수신 | `useTodos()`로 직접 접근 |
+| 새 페이지 추가 | props 전달 추가 필요 | 훅 호출만 하면 됨 |
 
-  return (
-    <Routes>
-      <Route path="/" element={<HomePage todos={todos} onAdd={handleAdd} ... />} />
-    </Routes>
-  );
-}
-```
-
-### After (Day 15 방식)
-```tsx
-// App.tsx - 라우팅만 담당 (깔끔!)
-function App() {
-  return (
-    <>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/completed" element={<CompletedPage />} />
-        <Route path="/stats" element={<StatsPage />} />
-      </Routes>
-    </>
-  );
-}
-
-// HomePage.tsx - useTodos()로 직접 데이터 접근
-function HomePage() {
-  const { todos, addTodo, toggleTodo, deleteTodo } = useTodos();
-  // ...
-}
-```
+---
 
 ## 실행 방법
 
 ```bash
-npm install
-npm run dev
+cd starter && npm install && npm run dev
 ```
 
-## 참고 자료
+---
 
-- [React Context 공식 문서](https://react.dev/learn/passing-data-deeply-with-context)
-- [useContext Hook](https://react.dev/reference/react/useContext)
+## 정리
+
+| 개념 | 핵심 |
+|------|------|
+| createContext | 전역 데이터 컨텍스트 생성 |
+| Provider | 하위 컴포넌트에 데이터 제공 |
+| useContext | Provider의 값에 접근 |
+| 커스텀 훅 | `useTheme()`, `useTodos()` — 사용 편의성 |
+| Props Drilling | Context로 해결 |
+
+> **다음 시간**: Day 16 - Next.js 시작 (SSR, App Router)

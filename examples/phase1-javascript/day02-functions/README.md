@@ -1,140 +1,173 @@
-# Day 02 - 할일 추가하고 삭제하기 (3/24)
+# Day 02 - 함수: 화살표 함수, 콜백, 클로저
 
-## 학습목표
+> **Phase 1: JavaScript** | 학습일: 2일차
 
-- **함수(Function)** 선언 방법과 호출 방법 이해하기
-- **매개변수(Parameter)** 와 **반환값(Return)** 이해하기
-- **조건문(if/else)** 을 사용하여 분기 처리하기
-- **반복문(for)** 과 배열 메서드를 활용하여 데이터 다루기
+---
 
-## 핵심 개념 설명
+## 학습 목표
 
-### 함수 (Function)
+- 함수 선언문, 표현식, 화살표 함수의 차이를 이해한다
+- 매개변수, 반환값, 기본값을 활용한다
+- 콜백 함수와 고차 함수 패턴을 활용한다
+- 클로저의 개념과 실용적 활용법을 익힌다
+- IIFE(즉시 실행 함수)를 이해한다
 
-함수는 특정 작업을 수행하는 코드 블록입니다. 한번 정의하면 여러 번 호출하여 재사용할 수 있습니다.
+---
+
+## 핵심 개념
+
+### 1. 함수 선언 3가지 방식
 
 ```javascript
-// 함수 선언
-function 인사하기(이름) {
-    console.log(`안녕하세요, ${이름}님!`);
+// 1) 함수 선언문 (호이스팅됨 - 선언 전에 호출 가능)
+function add(a, b) {
+  return a + b;
 }
 
-// 함수 호출
-인사하기("홍길동");  // "안녕하세요, 홍길동님!"
-```
-
-### 매개변수와 반환값
-
-- **매개변수(Parameter)**: 함수에 전달하는 입력값입니다.
-- **반환값(Return)**: 함수가 실행 결과로 돌려주는 값입니다.
-
-```javascript
-function 더하기(a, b) {
-    return a + b;  // 결과를 반환
-}
-
-const 결과 = 더하기(3, 5);  // 결과: 8
-```
-
-### 조건문 (if/else)
-
-조건에 따라 다른 코드를 실행할 수 있습니다.
-
-```javascript
-const score = 85;
-
-if (score >= 90) {
-    console.log("A등급");
-} else if (score >= 80) {
-    console.log("B등급");
-} else {
-    console.log("C등급");
-}
-```
-
-### 객체 (Object)
-
-Day 01에서는 할일을 단순한 문자열로 저장했지만, 이제 객체를 사용하여 더 많은 정보를 담을 수 있습니다.
-
-```javascript
-const todo = {
-    id: 1,
-    title: "JavaScript 공부하기",
-    done: false
+// 2) 함수 표현식 (호이스팅 안됨)
+const subtract = function(a, b) {
+  return a - b;
 };
 
-console.log(todo.title);  // "JavaScript 공부하기"
-todo.done = true;         // 속성 값 변경
+// 3) 화살표 함수 (ES6, 가장 간결)
+const multiply = (a, b) => a * b;
+const square = x => x * x;        // 매개변수 1개면 괄호 생략
+const greet = () => "안녕하세요";   // 매개변수 없음
 ```
 
-### 유용한 배열 메서드
+### 2. 매개변수와 반환값
 
-| 메서드 | 설명 | 예시 |
-|--------|------|------|
-| `push()` | 배열 끝에 항목 추가 | `todos.push(newTodo)` |
-| `splice()` | 특정 위치의 항목 삭제 | `todos.splice(index, 1)` |
-| `findIndex()` | 조건에 맞는 항목의 인덱스 찾기 | `todos.findIndex(t => t.id === id)` |
-| `find()` | 조건에 맞는 첫 번째 항목 찾기 | `todos.find(t => t.id === id)` |
+```javascript
+// 기본값
+function createUser(name, role = "user") {
+  return { name, role };
+}
 
-## 문제 (Problem)
-
-> **"할일을 추가/삭제/완료하는 함수를 만들자"**
-
-Day 01에서는 문자열 배열로 할일을 관리했습니다. 이번에는 객체 배열과 함수를 사용하여 더 강력한 할일 관리 프로그램을 만들어보세요.
-
-### 요구사항
-
-1. **`addTodo(title)`** - 새로운 할일을 추가하는 함수
-   - `{id, title, done: false}` 형태의 객체를 배열에 추가
-   - 추가 완료 메시지를 출력
-
-2. **`removeTodo(id)`** - 할일을 삭제하는 함수
-   - 주어진 id에 해당하는 할일을 배열에서 삭제
-   - 해당 id가 없으면 "찾을 수 없습니다" 메시지 출력
-
-3. **`completeTodo(id)`** - 할일을 완료 처리하는 함수
-   - 주어진 id에 해당하는 할일의 `done`을 `true`로 변경
-   - 이미 완료된 할일이면 "이미 완료" 메시지 출력
-   - 해당 id가 없으면 "찾을 수 없습니다" 메시지 출력
-
-4. **`printTodos()`** - 전체 할일 목록을 출력하는 함수
-   - 완료된 할일: `[x]`, 미완료 할일: `[ ]` 형태로 출력
-   - 전체/완료/미완료 개수 통계 출력
-
-### 예상 출력
-
-```
-[추가] "JavaScript 공부하기"가 추가되었습니다. (id: 1)
-[추가] "운동하기"가 추가되었습니다. (id: 2)
-[추가] "책 읽기"가 추가되었습니다. (id: 3)
-[완료] "JavaScript 공부하기"가 완료되었습니다!
-[삭제] "책 읽기"가 삭제되었습니다.
-
-=== 할일 목록 ===
-[x] 1. JavaScript 공부하기
-[ ] 2. 운동하기
-------------------
-전체: 2개 | 완료: 1개 | 미완료: 1개
+// 나머지 매개변수 (Rest)
+function sum(...numbers) {
+  return numbers.reduce((total, n) => total + n, 0);
+}
+sum(1, 2, 3, 4);  // 10
 ```
 
-## 힌트
+### 3. 콜백 함수
 
-- `nextId` 변수를 `let`으로 선언하여 새 할일이 추가될 때마다 1씩 증가시키세요.
-- `findIndex()`를 사용하면 배열에서 특정 조건을 만족하는 항목의 인덱스를 찾을 수 있습니다.
-  - 찾지 못하면 `-1`을 반환합니다.
-- `splice(index, 1)`을 사용하면 배열에서 특정 위치의 항목을 삭제할 수 있습니다.
-- 완료 여부를 표시할 때 삼항 연산자를 활용해보세요: `done ? "[x]" : "[ ]"`
+함수를 다른 함수의 인자로 전달하는 패턴입니다.
+
+```javascript
+function processArray(arr, callback) {
+  const result = [];
+  for (const item of arr) {
+    result.push(callback(item));
+  }
+  return result;
+}
+
+processArray([1, 2, 3], x => x * 2);  // [2, 4, 6]
+```
+
+### 4. 고차 함수 (함수 팩토리)
+
+```javascript
+function createMultiplier(factor) {
+  return (number) => number * factor;  // 함수를 반환
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+console.log(double(5));   // 10
+console.log(triple(5));   // 15
+```
+
+### 5. 클로저 (Closure)
+
+함수가 선언된 환경의 변수를 기억하는 특성입니다.
+
+```javascript
+function createCounter() {
+  let count = 0;  // 외부에서 직접 접근 불가 (private)
+  return {
+    increment: () => ++count,
+    decrement: () => --count,
+    getCount: () => count,
+  };
+}
+
+const counter = createCounter();
+counter.increment();  // 1
+counter.increment();  // 2
+counter.getCount();   // 2
+// count 변수에 직접 접근 불가 → 캡슐화
+```
+
+**실용 예제: 은행 계좌**
+
+```javascript
+function createBankAccount(initialBalance) {
+  let balance = initialBalance;
+  return {
+    deposit: (amount) => { balance += amount; return balance; },
+    withdraw: (amount) => {
+      if (amount > balance) return "잔액 부족";
+      balance -= amount;
+      return balance;
+    },
+    getBalance: () => balance,
+  };
+}
+```
+
+### 6. IIFE (즉시 실행 함수)
+
+```javascript
+const module = (function() {
+  const privateVar = "비밀";
+  return { getSecret: () => privateVar };
+})();
+// module.getSecret() → "비밀"
+// privateVar → 접근 불가
+```
+
+---
+
+## 실습 파일
+
+### starter/ (직접 구현)
+
+| 파일 | 내용 |
+|------|------|
+| `index.js` | 함수 선언, 매개변수, 기본값, 조건문으로 할일 관리 |
+| `02_arrow_functions.js` | 화살표 함수, 콜백, 배열 체이닝, 함수 팩토리 |
+| `03_closures.js` | 스코프, 클로저 카운터, 은행 계좌, IIFE |
+
+### practice/ (연습 문제)
+
+| 파일 | 내용 |
+|------|------|
+| `practice.js` | 기본 함수 연습 |
+| `practice-extra.js` | `unique`/`flatten`/`chunk` 구현, `myMap`/`myFilter`/`myReduce` 직접 만들기, `pipe` 함수 합성 |
+
+---
 
 ## 실행 방법
 
-`starter/index.js` 파일을 수정한 후, 터미널에서 다음 명령어를 실행하세요:
-
 ```bash
-node index.js
+node starter/index.js
+node starter/02_arrow_functions.js
+node starter/03_closures.js
+node practice/practice-extra.js
 ```
 
-완성된 코드와 비교하고 싶다면 `solution/index.js`를 확인하세요:
+---
 
-```bash
-node solution/index.js
-```
+## 정리
+
+| 개념 | 핵심 |
+|------|------|
+| 화살표 함수 | `(a, b) => a + b`, 간결한 문법 |
+| 콜백 | 함수를 인자로 전달하는 패턴 |
+| 고차 함수 | 함수를 반환하는 함수 (팩토리 패턴) |
+| 클로저 | 외부 변수를 기억하는 함수, private 변수 구현 |
+| IIFE | `(function() { ... })()`, 전역 오염 방지 |
+
+> **다음 시간**: Day 03 - 객체, 구조분해, 클래스, JSON

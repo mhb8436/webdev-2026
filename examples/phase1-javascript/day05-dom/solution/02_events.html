@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 05 - DOM 이벤트 심화 (풀이)</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .card { border: 1px solid #ddd; padding: 16px; margin: 8px 0; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+    .card:hover { background: #f0f0f0; }
+    .highlight { background: #ffffcc !important; border-color: #ffd700; }
+    #output { background: #f5f5f5; padding: 12px; margin-top: 16px; min-height: 100px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 13px; }
+    button { padding: 8px 16px; margin: 4px; cursor: pointer; }
+    input { padding: 8px; width: 100%; margin: 8px 0; box-sizing: border-box; }
+    section { margin-bottom: 24px; border-bottom: 1px solid #eee; padding-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <h1>DOM 이벤트 심화 (풀이)</h1>
+
+  <section>
+    <h2>1. 클릭 카운터</h2>
+    <button id="countBtn">클릭: 0</button>
+    <button id="resetBtn">리셋</button>
+  </section>
+
+  <section>
+    <h2>2. 실시간 입력</h2>
+    <input type="text" id="textInput" placeholder="여기에 입력하세요">
+    <p>글자 수: <span id="charCount">0</span></p>
+    <p>입력 내용: <span id="preview"></span></p>
+  </section>
+
+  <section>
+    <h2>3. 이벤트 위임</h2>
+    <div id="cardList">
+      <div class="card" data-id="1">카드 1 - 클릭하면 하이라이트</div>
+      <div class="card" data-id="2">카드 2 - 클릭하면 하이라이트</div>
+      <div class="card" data-id="3">카드 3 - 클릭하면 하이라이트</div>
+    </div>
+    <button id="addCardBtn">카드 추가</button>
+  </section>
+
+  <section>
+    <h2>4. 이벤트 전파</h2>
+    <div id="outer" style="padding: 20px; background: #e3f2fd; border-radius: 8px;">
+      외부 div
+      <div id="middle" style="padding: 20px; background: #bbdefb; margin-top: 8px; border-radius: 8px;">
+        중간 div
+        <button id="inner" style="margin-top: 8px;">내부 버튼</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="output">이벤트 로그:</div>
+
+  <script src="02_events.js"></script>
+</body>
+</html>

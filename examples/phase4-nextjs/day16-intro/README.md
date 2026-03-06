@@ -1,22 +1,22 @@
-# Day 16 - React에서 Next.js로 (Phase 4 시작)
+# Day 16 - React에서 Next.js로
 
-## 날짜
-4월 23일 (수)
+> **Phase 4: Next.js** | 학습일: 16일차
+
+---
 
 ## 학습 목표
-- Next.js의 개요와 React와의 차이점 이해
-- `create-next-app`으로 프로젝트 생성하기
-- App Router 구조 이해 (`app/page.tsx`, `layout.tsx`)
-- SSR(서버 사이드 렌더링) vs CSR(클라이언트 사이드 렌더링) 개념
 
-## 문제 (Problem)
-> "React 할일 앱을 Next.js App Router로 마이그레이션하자"
+- Next.js의 개요와 React와의 차이점을 이해한다
+- `create-next-app`으로 프로젝트를 생성한다
+- App Router 구조(`app/page.tsx`, `layout.tsx`)를 이해한다
+- SSR vs CSR의 차이를 이해한다
+- `'use client'` 지시어의 역할을 이해한다
 
-Phase 3에서 만든 React 할일 앱을 Next.js 프레임워크로 옮깁니다. Next.js의 App Router 구조를 사용하여 동일한 기능을 구현하면서, 서버 사이드 렌더링의 장점을 경험합니다.
+---
 
 ## 핵심 개념
 
-### SSR vs CSR
+### 1. SSR vs CSR
 
 | 구분 | CSR (Client Side Rendering) | SSR (Server Side Rendering) |
 |------|----------------------------|----------------------------|
@@ -26,7 +26,7 @@ Phase 3에서 만든 React 할일 앱을 Next.js 프레임워크로 옮깁니다
 | 인터랙션 | JS 로드 후 바로 가능 | hydration 이후 가능 |
 | 예시 | React (CRA) | Next.js |
 
-### App Router 구조
+### 2. App Router 구조
 
 ```
 src/app/
@@ -37,14 +37,13 @@ src/app/
 
 - `layout.tsx`: 모든 페이지를 감싸는 레이아웃. `children`으로 페이지 내용을 받음
 - `page.tsx`: 해당 폴더의 URL 경로에 대응하는 페이지 컴포넌트
-- `globals.css`: 전역 CSS 스타일
 
-### 'use client' 지시어
+### 3. 'use client' 지시어
 
 Next.js에서 컴포넌트는 기본적으로 **서버 컴포넌트**입니다. `useState`, `useEffect` 등 React 훅을 사용하려면 파일 상단에 `'use client'`를 추가해야 합니다.
 
 ```tsx
-'use client'; // 이 지시어가 있어야 useState 사용 가능
+'use client';
 
 import { useState } from 'react';
 
@@ -54,7 +53,7 @@ export default function Counter() {
 }
 ```
 
-### 파일 기반 라우팅 (File-based Routing)
+### 4. 파일 기반 라우팅
 
 | 파일 경로 | URL |
 |-----------|-----|
@@ -62,71 +61,47 @@ export default function Counter() {
 | `src/app/about/page.tsx` | `/about` |
 | `src/app/todos/page.tsx` | `/todos` |
 
-## 프로젝트 구조
+---
 
-```
-day16-intro/
-├── starter/          ← 직접 구현해볼 시작 코드
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── next.config.ts
-│   └── src/
-│       ├── app/
-│       │   ├── layout.tsx
-│       │   ├── page.tsx
-│       │   └── globals.css
-│       └── components/
-│           └── TodoApp.tsx
-└── solution/         ← 완성된 정답 코드
-    ├── package.json
-    ├── tsconfig.json
-    ├── next.config.ts
-    └── src/
-        ├── app/
-        │   ├── layout.tsx
-        │   ├── page.tsx
-        │   └── globals.css
-        └── components/
-            └── TodoApp.tsx
-```
+## 실습 파일
+
+### starter/ (직접 구현)
+
+| 파일 | 내용 |
+|------|------|
+| `src/app/layout.tsx` | 루트 레이아웃, metadata 설정 |
+| `src/app/page.tsx` | 메인 페이지 |
+| `src/components/TodoApp.tsx` | 'use client' 할일 앱 컴포넌트 |
+
+### solution/ (완성 코드)
+
+| 파일 | 내용 |
+|------|------|
+| `src/app/layout.tsx` | 완성된 레이아웃 |
+| `src/app/page.tsx` | 완성된 메인 페이지 |
+| `src/components/TodoApp.tsx` | 완성된 할일 앱 |
+
+---
 
 ## 실행 방법
 
 ```bash
-# starter 또는 solution 폴더에서
-npm install
-npm run dev
+cd starter && npm install && npm run dev
 ```
 
 브라우저에서 `http://localhost:3000` 접속
 
-## 구현 가이드
+---
 
-### Step 1: 프로젝트 구조 이해하기
-- `package.json`의 의존성 확인 (next, react, react-dom)
-- `tsconfig.json`의 `@/*` 경로 별칭(alias) 확인
-- `next.config.ts` 설정 파일 확인
+## 정리
 
-### Step 2: layout.tsx 완성하기
-- HTML `lang` 속성을 `"ko"`로 설정
-- `metadata`에 제목과 설명 작성
-- `globals.css` import
+| 개념 | 핵심 |
+|------|------|
+| Next.js | React 기반 풀스택 프레임워크 (SSR + CSR) |
+| App Router | `app/` 폴더 기반 라우팅 |
+| layout.tsx | 공통 레이아웃 (metadata, HTML 구조) |
+| page.tsx | URL 경로에 대응하는 페이지 |
+| 'use client' | 클라이언트 컴포넌트 지정 (훅 사용 시 필수) |
+| SSR | 서버에서 HTML 생성 → SEO 유리 |
 
-### Step 3: TodoApp 클라이언트 컴포넌트 구현
-- `'use client'` 지시어 추가
-- React Phase에서 만든 로직을 가져오기 (useState, localStorage)
-- 할일 추가, 삭제, 토글 기능
-
-### Step 4: page.tsx에서 TodoApp 렌더링
-- 서버 컴포넌트인 page.tsx에서 클라이언트 컴포넌트 import
-- 'use client'가 page.tsx에 필요한지 생각해보기
-
-## 힌트
-- `page.tsx` 자체에 `'use client'`를 넣지 않아도 됩니다. 클라이언트 컴포넌트인 `TodoApp`을 import해서 사용하면 됩니다.
-- `layout.tsx`는 서버 컴포넌트로 유지합니다 (metadata를 export하기 위해).
-- localStorage는 브라우저에서만 사용 가능하므로 `useEffect` 안에서 접근해야 합니다.
-
-## 참고 자료
-- [Next.js 공식 문서 - App Router](https://nextjs.org/docs/app)
-- [Next.js 공식 문서 - 서버 컴포넌트](https://nextjs.org/docs/app/building-your-application/rendering/server-components)
-- [Next.js 공식 문서 - 클라이언트 컴포넌트](https://nextjs.org/docs/app/building-your-application/rendering/client-components)
+> **다음 시간**: Day 17 - 라우팅과 레이아웃

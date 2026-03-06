@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Day 05 - DOM 연습문제</title>
+  <style>
+    body { font-family: 'Pretendard', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .exercise { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .exercise h3 { margin-top: 0; color: #2c3e50; }
+    button { padding: 6px 12px; margin: 4px; cursor: pointer; }
+    input { padding: 6px; margin: 4px; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 8px; margin: 4px 0; background: #f5f5f5; border-radius: 4px; display: flex; justify-content: space-between; }
+    li .delete-btn { color: red; cursor: pointer; border: none; background: none; }
+  </style>
+</head>
+<body>
+  <h1>Day 05 - DOM 연습문제</h1>
+
+  <!-- 연습 1: 탭 UI -->
+  <div class="exercise" id="ex1">
+    <h3>연습 1: 탭 UI</h3>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab1">탭 1</button>
+      <button class="tab-btn" data-tab="tab2">탭 2</button>
+      <button class="tab-btn" data-tab="tab3">탭 3</button>
+    </div>
+    <div class="tab-content" id="tab1">탭 1 내용입니다.</div>
+    <div class="tab-content" id="tab2" style="display:none">탭 2 내용입니다.</div>
+    <div class="tab-content" id="tab3" style="display:none">탭 3 내용입니다.</div>
+  </div>
+
+  <!-- 연습 2: 할일 목록 (이벤트 위임) -->
+  <div class="exercise" id="ex2">
+    <h3>연습 2: 할일 목록 (이벤트 위임)</h3>
+    <div>
+      <input type="text" id="todo-input" placeholder="할일 입력...">
+      <button id="todo-add">추가</button>
+    </div>
+    <ul id="todo-list"></ul>
+  </div>
+
+  <!-- 연습 3: 드래그 앤 무브 -->
+  <div class="exercise" id="ex3">
+    <h3>연습 3: 마우스 따라다니는 박스</h3>
+    <div id="drag-area" style="position:relative; height:200px; background:#eee; border-radius:8px;">
+      <div id="follow-box" style="position:absolute; width:40px; height:40px; background:#3498db; border-radius:50%; transition: transform 0.1s;"></div>
+    </div>
+  </div>
+
+  <script src="practice-extra.js"></script>
+</body>
+</html>

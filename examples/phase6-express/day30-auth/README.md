@@ -1,20 +1,19 @@
-# Day 30 - 로그인 기능 추가 (5/27)
+# Day 30 - 인증: JWT와 bcrypt
+
+> **Phase 6: Express** | 학습일: 30일차
+
+---
 
 ## 학습 목표
 
-- **JWT(JSON Web Token)**: 토큰 기반 인증의 원리와 구조 이해
-- **bcrypt**: 비밀번호 해싱과 안전한 저장 방법
-- **인증 미들웨어**: Express에서 요청마다 토큰을 검증하는 방법
-- **토큰 발급/검증**: JWT 토큰 생성과 검증 흐름
-- **회원가입/로그인**: 사용자 등록과 인증 API 구현
+- JWT(JSON Web Token) 토큰 기반 인증을 구현한다
+- bcrypt로 비밀번호를 안전하게 해싱한다
+- 인증 미들웨어를 작성한다
+- 회원가입/로그인 API를 구현한다
+- RBAC(역할 기반 접근 제어)를 구현한다
+- Rate Limiting으로 API를 보호한다
 
-## 문제 정의
-
-> "회원가입/로그인으로 내 할일만 볼 수 있게 하자"
-
-지금까지 만든 Todo API는 누구나 모든 할일을 볼 수 있습니다.
-실제 서비스에서는 사용자별로 자신의 할일만 관리할 수 있어야 합니다.
-오늘은 회원가입과 로그인 기능을 추가하고, 인증된 사용자만 자신의 할일에 접근할 수 있도록 만들겠습니다.
+---
 
 ## 핵심 개념
 
@@ -24,49 +23,113 @@
 토큰 구조: header.payload.signature
 
 Header:  { "alg": "HS256", "typ": "JWT" }
-Payload: { "userId": 1, "email": "user@test.com", "iat": 1234567890 }
-Signature: HMACSHA256(base64(header) + "." + base64(payload), secret)
+Payload: { "userId": 1, "email": "user@test.com" }
+Signature: HMACSHA256(header + payload, secret)
 ```
-
-JWT는 서버가 클라이언트에게 발급하는 "신분증" 같은 것입니다.
-클라이언트는 이 토큰을 매 요청마다 함께 보내서 자신이 누구인지 증명합니다.
-
-### 2. bcrypt - 비밀번호 해싱
 
 ```javascript
-// 비밀번호를 절대 평문으로 저장하지 않음!
-const hashed = await bcrypt.hash('mypassword', 10); // salt rounds: 10
-// 결과: $2b$10$N9qo8uLOickgx2ZMRZoMye...
+const jwt = require('jsonwebtoken');
 
-// 비밀번호 검증
-const isMatch = await bcrypt.compare('mypassword', hashed); // true
+// 토큰 발급
+const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+  expiresIn: '24h',
+});
+
+// 토큰 검증
+const decoded = jwt.verify(token, process.env.JWT_SECRET);
 ```
 
-### 3. 인증 흐름
+### 2. bcrypt — 비밀번호 해싱
+
+```javascript
+const bcrypt = require('bcrypt');
+
+// 해싱 (회원가입)
+const hashed = await bcrypt.hash('mypassword', 10);
+
+// 검증 (로그인)
+const isMatch = await bcrypt.compare('mypassword', hashed);
+```
+
+### 3. 인증 미들웨어
+
+```javascript
+function authMiddleware(req, res, next) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: '토큰 없음' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch {
+    res.status(401).json({ error: '유효하지 않은 토큰' });
+  }
+}
+
+// 사용: 인증이 필요한 라우트에 적용
+router.get('/api/todos', authMiddleware, getTodos);
+```
+
+### 4. 인증 흐름
 
 ```
-1. 회원가입: POST /api/auth/register → 비밀번호 해싱 후 저장 → 토큰 반환
+1. 회원가입: POST /api/auth/register → 비밀번호 해싱 → 토큰 반환
 2. 로그인:   POST /api/auth/login → 비밀번호 비교 → 토큰 반환
-3. API 호출: GET /api/todos + Authorization: Bearer <token> → 미들웨어에서 검증 → 본인 데이터만 반환
+3. API 호출: Authorization: Bearer <token> → 미들웨어 검증 → 본인 데이터만 반환
 ```
 
-## 실습 단계
+### 5. RBAC (역할 기반 접근 제어)
 
-### Step 1: User 모델 추가
+```javascript
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: '권한 없음' });
+    }
+    next();
+  };
+}
 
-`prisma/schema.prisma`에서 User 모델의 주석을 해제하고 Todo와의 관계를 설정하세요.
+// admin만 접근 가능
+router.delete('/users/:id', authMiddleware, requireRole('admin'), deleteUser);
+```
 
-### Step 2: 인증 미들웨어 구현
+### 6. Rate Limiting
 
-`src/middleware/auth.js`에서 JWT 토큰을 검증하는 미들웨어를 완성하세요.
+```javascript
+const rateLimit = require('express-rate-limit');
 
-### Step 3: 회원가입/로그인 라우트 구현
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15분
+  max: 100,                   // 최대 100회
+  message: { error: '요청이 너무 많습니다' },
+});
 
-`src/routes/auth.js`에서 register와 login 엔드포인트를 완성하세요.
+app.use('/api/', limiter);
+```
 
-### Step 4: Todo 라우트에 인증 적용
+---
 
-`src/routes/todos.js`에서 인증 미들웨어를 적용하고, userId로 필터링하세요.
+## 실습 파일
+
+### starter/ (직접 구현)
+
+| 파일 | 내용 |
+|------|------|
+| `src/middleware/auth.js` | JWT 인증 미들웨어 |
+| `src/routes/auth.js` | 회원가입/로그인 라우트 |
+| `src/routes/todos.js` | 인증 적용 할일 CRUD |
+| `src/middleware/rbac.js` | 역할 기반 접근 제어 |
+| `src/middleware/rateLimit.js` | Rate Limiting 설정 |
+| `src/middleware/validation.js` | 입력 검증 미들웨어 |
+| `src/routes/auth-refresh.js` | 토큰 갱신 (Refresh Token) |
+
+### solution/ (완성 코드)
+
+동일 구조의 완성된 코드
+
+---
 
 ## 실행 방법
 
@@ -76,39 +139,33 @@ npm run db:migrate
 npm run dev
 ```
 
-## API 테스트
-
 ```bash
 # 회원가입
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username":"testuser","email":"test@test.com","password":"password123"}'
 
-# 로그인
+# 로그인 → 토큰 받기
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@test.com","password":"password123"}'
 
-# 인증이 필요한 할일 조회 (토큰 필요)
+# 인증된 API 호출
 curl http://localhost:3000/api/todos \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE"
-
-# 할일 생성 (토큰 필요)
-curl -X POST http://localhost:3000/api/todos \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{"title":"공부하기","priority":"high"}'
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-## 체크리스트
+---
 
-- [ ] User 모델을 Prisma 스키마에 추가했는가?
-- [ ] bcrypt로 비밀번호를 해싱하여 저장하는가?
-- [ ] JWT 토큰을 발급하고 검증하는가?
-- [ ] 인증 미들웨어가 올바르게 동작하는가?
-- [ ] 인증된 사용자만 자신의 할일에 접근할 수 있는가?
-- [ ] 에러 처리가 적절한가? (중복 이메일, 잘못된 비밀번호 등)
+## 정리
 
-## 다음 단계
+| 개념 | 핵심 |
+|------|------|
+| JWT | 토큰 기반 인증 (`jwt.sign`, `jwt.verify`) |
+| bcrypt | 비밀번호 해싱 (`hash`, `compare`) |
+| 인증 미들웨어 | `Authorization: Bearer <token>` 검증 |
+| RBAC | 역할별 접근 제어 (`requireRole('admin')`) |
+| Rate Limiting | API 호출 횟수 제한 (DDoS 방지) |
+| Refresh Token | Access Token 만료 시 갱신 |
 
-Day 31에서는 Swagger를 사용하여 API 문서를 자동 생성하는 방법을 배웁니다.
+> **다음 시간**: Day 31 - API 문서 (Swagger)

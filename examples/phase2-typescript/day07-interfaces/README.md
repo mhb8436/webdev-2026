@@ -1,108 +1,159 @@
-# Day 07 - Todo 설계도 만들기 (3/31)
+# Day 07 - 인터페이스와 유틸리티 타입
+
+> **Phase 2: TypeScript** | 학습일: 7일차
+
+---
 
 ## 학습 목표
 
-- `interface` 키워드로 객체 구조를 정의하는 방법 이해하기
-- 선택적 속성(`?`)과 읽기 전용 속성(`readonly`) 사용법 익히기
-- 함수 타입을 인터페이스로 정의하기
-- `class`에서 `implements`로 인터페이스를 구현하는 방법 배우기
-- 인터페이스와 타입 별칭의 차이점 이해하기
+- `interface`로 객체 구조를 정의한다
+- `readonly`, 선택적 속성(`?`), 인덱스 시그니처를 활용한다
+- `extends`로 인터페이스를 확장하고 `implements`로 클래스에 구현한다
+- `Partial`, `Required`, `Pick`, `Omit`, `Record`, `Readonly` 유틸리티 타입을 활용한다
 
-## 문제
-
-> "Todo의 구조를 인터페이스로 정의하고 함수에 타입을 붙이자"
-
-Day06에서 `type`으로 정의했던 Todo 구조를 `interface`로 변환하고,
-서비스 클래스를 만들어 객체지향적으로 리팩토링합니다.
+---
 
 ## 핵심 개념
 
-### 1. interface 정의
+### 1. 인터페이스 기본
 
 ```typescript
-interface IUser {
-  readonly id: number;   // 읽기 전용 - 생성 후 변경 불가
+interface User {
+  readonly id: number;     // 읽기 전용 (생성 후 변경 불가)
   name: string;
-  email?: string;        // 선택적 속성 - 있어도 되고 없어도 됨
+  email?: string;          // 선택적 속성
+}
+
+const user: User = { id: 1, name: "홍길동" };
+// user.id = 2;            // 에러! readonly
+```
+
+### 2. 인터페이스 확장 (extends)
+
+```typescript
+interface BaseEntity {
+  readonly id: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Post extends BaseEntity {
+  title: string;
+  content: string;
+  authorId: number;
+}
+
+// Post = { id, createdAt, updatedAt, title, content, authorId }
+```
+
+### 3. 클래스에서 구현 (implements)
+
+```typescript
+interface Printable {
+  toString(): string;
+}
+
+interface Serializable {
+  toJSON(): object;
+}
+
+class TodoItem implements Printable, Serializable {
+  constructor(public id: number, public title: string) {}
+  toString() { return `[${this.id}] ${this.title}`; }
+  toJSON() { return { id: this.id, title: this.title }; }
 }
 ```
 
-### 2. readonly 속성
+### 4. 유틸리티 타입
 
 ```typescript
-const user: IUser = { id: 1, name: "홍길동" };
-// user.id = 2;  // 에러! readonly 속성은 변경 불가
-user.name = "김철수"; // OK - readonly가 아닌 속성은 변경 가능
-```
-
-### 3. 선택적 속성 (Optional Property)
-
-```typescript
-interface IConfig {
-  host: string;
-  port: number;
-  debug?: boolean; // 선택적 - undefined일 수 있음
+interface Todo {
+  id: number;
+  title: string;
+  done: boolean;
+  priority: "high" | "medium" | "low";
 }
 
-const config: IConfig = { host: "localhost", port: 3000 };
-// debug를 생략해도 에러 없음
+// Partial<T> - 모든 속성을 선택적으로
+type UpdateTodoInput = Partial<Todo>;
+// { id?: number; title?: string; done?: boolean; priority?: ... }
+
+// Omit<T, K> - 특정 속성 제외
+type CreateTodoInput = Omit<Todo, "id">;
+// { title: string; done: boolean; priority: ... }
+
+// Pick<T, K> - 특정 속성만 선택
+type TodoSummary = Pick<Todo, "id" | "title" | "done">;
+// { id: number; title: string; done: boolean }
+
+// Record<K, V> - 키-값 매핑 타입
+type PriorityCount = Record<Todo["priority"], number>;
+// { high: number; medium: number; low: number }
+
+// Readonly<T> - 모든 속성을 readonly로
+type ReadonlyTodo = Readonly<Todo>;
+
+// Required<T> - 모든 속성을 필수로
+type RequiredConfig = Required<{ host?: string; port?: number }>;
 ```
 
-### 4. 함수 타입 인터페이스
+### 5. 인덱스 시그니처
 
 ```typescript
-interface ICalculator {
-  add(a: number, b: number): number;
-  subtract(a: number, b: number): number;
+interface StringMap {
+  [key: string]: string;   // 어떤 문자열 키든 가능
 }
+
+const env: StringMap = {
+  NODE_ENV: "development",
+  PORT: "3000",
+};
 ```
 
-### 5. 클래스에서 인터페이스 구현
+---
 
-```typescript
-class Calculator implements ICalculator {
-  add(a: number, b: number): number {
-    return a + b;
-  }
-  subtract(a: number, b: number): number {
-    return a - b;
-  }
-}
-```
+## 실습 파일
 
-## 프로젝트 구조
+### starter/ (직접 구현)
 
-```
-day07-interfaces/
-├── README.md
-├── starter/
-│   ├── tsconfig.json
-│   └── index.ts          # TODO가 포함된 시작 코드
-└── solution/
-    ├── tsconfig.json
-    └── index.ts          # 완성된 정답 코드
-```
+| 파일 | 내용 |
+|------|------|
+| `index.ts` | 인터페이스 정의, readonly, optional, implements |
+| `02_interface_advanced.ts` | extends, 다중 구현, 인덱스 시그니처 |
+| `03_utility_types.ts` | Partial, Omit, Pick, Record, Readonly |
+
+### practice/ (연습 문제)
+
+| 파일 | 내용 |
+|------|------|
+| `practice.ts` | 기본 인터페이스 연습 |
+| `practice-extra.ts` | 게시판 타입 설계, 제네릭 CRUD Repository, 폼 검증 타입 |
+
+---
 
 ## 실행 방법
 
 ```bash
-# starter 또는 solution 디렉토리에서 실행
-
-# 방법 1: 컴파일 후 실행
-npx tsc && node dist/index.js
-
-# 방법 2: ts-node로 직접 실행
-npx ts-node index.ts
+npx tsx starter/index.ts
+npx tsx starter/02_interface_advanced.ts
+npx tsx starter/03_utility_types.ts
+npx tsx practice/practice-extra.ts
 ```
 
-## 도전 과제
+---
 
-1. `ITodo` 인터페이스를 정의하세요 (readonly, optional 포함)
-2. `ITodoService` 인터페이스로 서비스 메서드 시그니처를 정의하세요
-3. `TodoService` 클래스가 `ITodoService`를 구현하도록 만드세요
-4. 모든 메서드가 올바른 타입으로 동작하는지 확인하세요
+## 정리
 
-## 참고 자료
+| 개념 | 핵심 |
+|------|------|
+| `interface` | 객체 구조 정의 |
+| `readonly` | 생성 후 변경 불가 |
+| `?` | 선택적 속성 |
+| `extends` | 인터페이스 확장 (상속) |
+| `implements` | 클래스에서 인터페이스 구현 |
+| `Partial<T>` | 모든 속성을 선택적으로 |
+| `Omit<T, K>` | 특정 속성 제외 |
+| `Pick<T, K>` | 특정 속성만 선택 |
+| `Record<K, V>` | 키-값 매핑 |
 
-- [TypeScript 공식 문서 - 인터페이스](https://www.typescriptlang.org/docs/handbook/2/objects.html)
-- [TypeScript 공식 문서 - 클래스](https://www.typescriptlang.org/docs/handbook/2/classes.html)
+> **다음 시간**: Day 08 - 제네릭 (제약조건, keyof, 제네릭 클래스)

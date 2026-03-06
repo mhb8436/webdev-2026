@@ -1,25 +1,22 @@
-# Day 32 - 프론트엔드 연동 완성 (5/29~6/1)
+# Day 32 - 풀스택 완성: React + Express
+
+> **Phase 6: Express** | 학습일: 32일차
+
+---
 
 ## 학습 목표
 
-- **CORS**: 교차 출처 리소스 공유의 개념과 설정
-- **fetch/axios**: 브라우저에서 API 호출하는 방법
-- **프록시**: 개발 환경에서 CORS 우회를 위한 프록시 설정
-- **환경변수**: 클라이언트/서버의 환경변수 관리
-- **풀스택 아키텍처**: React + Express 풀스택 앱 구조
+- CORS(교차 출처 리소스 공유)를 이해하고 설정한다
+- Vite 프록시로 개발 환경 CORS를 해결한다
+- React에서 fetch/axios로 Express API를 호출한다
+- AuthContext로 토큰과 사용자 정보를 전역 관리한다
+- React + Express 풀스택 할일 앱을 완성한다
 
-## 문제 정의
-
-> "React 프론트엔드와 Express 백엔드를 연동해서 풀스택 앱을 완성하자"
-
-지금까지 만든 Express API 서버와 React 프론트엔드를 연동하여
-실제로 동작하는 풀스택 할일 관리 앱을 완성합니다.
+---
 
 ## 핵심 개념
 
 ### 1. CORS (교차 출처 리소스 공유)
-
-브라우저는 보안상 다른 도메인의 API를 직접 호출할 수 없습니다.
 
 ```
 프론트엔드: http://localhost:5173
@@ -27,9 +24,13 @@
 → 다른 포트 = 다른 출처 = CORS 필요!
 ```
 
-### 2. Vite 프록시 설정
+```javascript
+// Express에서 CORS 허용
+const cors = require('cors');
+app.use(cors({ origin: 'http://localhost:5173' }));
+```
 
-개발 환경에서는 Vite 프록시로 CORS 문제를 간단히 해결합니다.
+### 2. Vite 프록시
 
 ```typescript
 // vite.config.ts
@@ -40,19 +41,44 @@ export default defineConfig({
     }
   }
 });
-// /api로 시작하는 요청은 자동으로 백엔드로 전달됨
+// /api로 시작하는 요청 → 자동으로 백엔드로 전달
 ```
 
-### 3. 인증 컨텍스트 (AuthContext)
-
-React Context를 사용하여 토큰과 사용자 정보를 전역으로 관리합니다.
+### 3. API 호출 함수
 
 ```typescript
-// 로그인 후 토큰을 저장하고, API 호출 시 헤더에 포함
-const { token, login, logout } = useAuth();
+// api/todos.ts
+export async function fetchTodos(token: string) {
+  const res = await fetch('/api/todos', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
+
+export async function createTodo(title: string, token: string) {
+  const res = await fetch('/api/todos', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ title }),
+  });
+  return res.json();
+}
 ```
 
-### 4. 풀스택 아키텍처
+### 4. AuthContext
+
+```typescript
+const { token, user, login, logout } = useAuth();
+
+// 로그인 후 토큰을 localStorage에 저장
+// API 호출 시 Authorization 헤더에 포함
+// 새로고침 시 localStorage에서 복원
+```
+
+### 5. 풀스택 아키텍처
 
 ```
 client/ (React + Vite)          server/ (Express + Prisma)
@@ -63,85 +89,50 @@ client/ (React + Vite)          server/ (Express + Prisma)
 │   └── components/              └── prisma/
 ```
 
-## 프로젝트 구조
+---
 
-```
-day32-api-complete/
-├── starter/
-│   ├── server/          ← Express 백엔드
-│   │   ├── package.json
-│   │   ├── .env
-│   │   ├── prisma/
-│   │   └── src/
-│   └── client/          ← React 프론트엔드
-│       ├── package.json
-│       ├── vite.config.ts
-│       └── src/
-└── solution/
-    ├── server/
-    └── client/
-```
+## 실습 파일
 
-## 실습 단계
+### starter/ (직접 구현)
 
-### Step 1: 서버 설정 확인
+| 파일 | 내용 |
+|------|------|
+| `server/src/index.js` | Express 서버 (CORS 설정) |
+| `server/src/routes/auth.js` | 인증 API |
+| `server/src/routes/todos.js` | 할일 CRUD API |
+| `client/vite.config.ts` | 프록시 설정 |
+| `client/src/api/` | API 호출 함수 |
+| `client/src/context/AuthContext.tsx` | 인증 상태 관리 |
+| `client/src/pages/` | 로그인, 회원가입, 할일 페이지 |
 
-서버는 Day 31의 솔루션을 그대로 사용합니다. 먼저 서버를 실행해보세요.
+### solution/ (완성 코드)
 
-```bash
-cd server
-npm install
-npm run db:migrate
-npm run dev
-```
+동일 구조의 완성된 코드
 
-### Step 2: API 호출 함수 작성
-
-`client/src/api/` 폴더에 인증과 할일 API 호출 함수를 작성하세요.
-
-### Step 3: AuthContext 구현
-
-`client/src/context/AuthContext.tsx`에서 토큰 관리 컨텍스트를 만드세요.
-
-### Step 4: 페이지 컴포넌트 구현
-
-로그인, 회원가입, 할일 목록 페이지를 만드세요.
-
-### Step 5: 라우팅과 보호된 라우트
-
-인증되지 않은 사용자는 로그인 페이지로 리다이렉트되도록 설정하세요.
+---
 
 ## 실행 방법
 
 ```bash
-# 터미널 1: 서버 실행
-cd server
-npm install
-npm run db:migrate
-npm run dev
+# 터미널 1: 서버
+cd server && npm install && npm run db:migrate && npm run dev
 
-# 터미널 2: 클라이언트 실행
-cd client
-npm install
-npm run dev
+# 터미널 2: 클라이언트
+cd client && npm install && npm run dev
 ```
 
-브라우저에서 `http://localhost:5173`에 접속하세요.
+브라우저에서 `http://localhost:5173` 접속
 
-## 체크리스트
+---
 
-- [ ] 서버와 클라이언트가 각각 실행되는가?
-- [ ] Vite 프록시를 통해 API 호출이 되는가?
-- [ ] 회원가입 후 자동 로그인되는가?
-- [ ] 로그인/로그아웃이 정상 동작하는가?
-- [ ] 할일 CRUD가 모두 동작하는가?
-- [ ] 새로고침해도 로그인 상태가 유지되는가?
-- [ ] 인증되지 않은 사용자는 로그인 페이지로 이동하는가?
+## 정리
 
-## 축하합니다!
+| 개념 | 핵심 |
+|------|------|
+| CORS | 다른 출처 간 리소스 공유 (`cors` 미들웨어) |
+| Vite 프록시 | 개발 환경 CORS 우회 (`/api` → 백엔드) |
+| fetch + token | `Authorization: Bearer <token>` 헤더 |
+| AuthContext | 토큰/사용자 정보 전역 관리 |
+| 풀스택 | React (프론트) + Express (백엔드) + Prisma (DB) |
 
-Phase 6를 완료했습니다! 이제 여러분은 풀스택 웹 앱을 만들 수 있습니다.
-
-- 백엔드: Express + Prisma + JWT 인증 + Swagger 문서
-- 프론트엔드: React + TypeScript + Context API + React Router
-- 연동: CORS + Vite 프록시 + fetch API
+> **축하합니다!** 32일간의 웹 풀스택 과정을 완료했습니다.

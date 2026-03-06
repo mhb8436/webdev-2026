@@ -1,158 +1,140 @@
-# Day 03 - 할일에 정보 추가하기 (3/25)
+# Day 03 - 객체: 구조분해, 클래스, JSON
 
-## 학습목표
+> **Phase 1: JavaScript** | 학습일: 3일차
 
-- **객체(Object)** 를 사용하여 관련된 데이터를 하나로 묶기
-- **배열 메서드** 이해하기: `filter`, `find`, `map`, `forEach`
-- **Date 객체** 를 사용하여 날짜와 시간 다루기
-- 객체 배열에서 조건에 맞는 데이터를 검색하고 변환하기
+---
 
-## 핵심 개념 설명
+## 학습 목표
 
-### 객체 (Object)
+- 객체 리터럴과 메서드를 활용한다
+- 구조분해 할당(Destructuring)으로 값을 추출한다
+- Spread/Rest 연산자를 활용한다
+- ES6 클래스와 상속(`extends`, `super`)을 구현한다
+- JSON 직렬화/역직렬화와 깊은 복사를 이해한다
 
-객체는 관련된 데이터를 키-값(key-value) 쌍으로 묶어서 저장하는 자료구조입니다.
+---
 
-```javascript
-const todo = {
-  id: 1,
-  title: "JavaScript 공부하기",
-  done: false,
-  priority: "high",
-  category: "공부",
-  createdAt: new Date()
-};
+## 핵심 개념
 
-console.log(todo.title);    // "JavaScript 공부하기"
-console.log(todo["done"]);  // false
-```
-
-### 배열 메서드 (Array Methods)
-
-배열에는 데이터를 검색하고 변환하는 유용한 메서드들이 있습니다.
-
-#### `filter` - 조건에 맞는 요소만 걸러내기
+### 1. 구조분해 할당 (Destructuring)
 
 ```javascript
-const numbers = [1, 2, 3, 4, 5];
-const even = numbers.filter(n => n % 2 === 0);
-// [2, 4]
+// 객체 구조분해
+const user = { name: "홍길동", age: 30, role: "개발자" };
+const { name, age, role = "사용자" } = user;
+
+// 중첩 구조분해
+const company = { ceo: { contact: { email: "ceo@test.com" } } };
+const { ceo: { contact: { email } } } = company;
+
+// 배열 구조분해
+const [first, second, ...rest] = [1, 2, 3, 4, 5];
+// first=1, second=2, rest=[3,4,5]
+
+// 변수 교환
+let a = 1, b = 2;
+[a, b] = [b, a];  // a=2, b=1
+
+// 함수 매개변수 구조분해
+function createUser({ name, age, role = "user" }) {
+  return { name, age, role };
+}
 ```
 
-#### `find` - 조건에 맞는 첫 번째 요소 찾기
+### 2. Spread / Rest 연산자
 
 ```javascript
-const users = [
-  { name: "홍길동", age: 25 },
-  { name: "김철수", age: 30 }
-];
-const found = users.find(u => u.name === "홍길동");
-// { name: "홍길동", age: 25 }
+// Spread: 펼치기
+const defaults = { theme: "light", lang: "ko" };
+const settings = { ...defaults, theme: "dark" };  // 병합 (뒤가 덮어쓰기)
+
+// Rest: 나머지 모으기 (비밀번호 제외)
+const { password, ...safeUser } = { name: "홍길동", email: "a@b.c", password: "secret" };
+// safeUser = { name: "홍길동", email: "a@b.c" }
 ```
 
-#### `map` - 배열의 각 요소를 변환하기
+### 3. ES6 클래스
 
 ```javascript
-const names = ["홍길동", "김철수"];
-const greetings = names.map(name => `안녕하세요, ${name}님!`);
-// ["안녕하세요, 홍길동님!", "안녕하세요, 김철수님!"]
+class Animal {
+  #sound;  // private 필드 (ES2022)
+
+  constructor(name, sound) {
+    this.name = name;
+    this.#sound = sound;
+  }
+
+  speak() { return `${this.name}: ${this.#sound}`; }
+
+  static create(name, sound) { return new Animal(name, sound); }
+}
+
+class Dog extends Animal {
+  constructor(name, breed) {
+    super(name, "멍멍");  // 부모 생성자 호출
+    this.breed = breed;
+  }
+
+  fetch(item) { return `${this.name}이(가) ${item}을(를) 물어옴`; }
+}
 ```
 
-#### `forEach` - 배열의 각 요소에 대해 작업 수행하기
+### 4. JSON과 깊은 복사
 
 ```javascript
-const fruits = ["사과", "바나나", "포도"];
-fruits.forEach(fruit => {
-  console.log(`과일: ${fruit}`);
-});
+const obj = { name: "홍길동", scores: [85, 92] };
+
+// 직렬화 / 역직렬화
+const json = JSON.stringify(obj, null, 2);  // → 문자열
+const parsed = JSON.parse(json);             // → 객체
+
+// 얕은 복사 vs 깊은 복사
+const shallow = { ...obj };            // 중첩 객체는 참조 공유!
+const deep = structuredClone(obj);     // 깊은 복사 (ES2022)
 ```
 
-### Date 객체
+---
 
-`Date` 객체를 사용하면 날짜와 시간을 다룰 수 있습니다.
+## 실습 파일
 
-```javascript
-const now = new Date();
-console.log(now);                    // 현재 날짜와 시간
-console.log(now.toLocaleDateString()); // "2025. 3. 25."
-console.log(now.toLocaleTimeString()); // "오후 2:30:00"
-```
+### starter/ (직접 구현)
 
-### `includes` - 문자열 포함 여부 확인
+| 파일 | 내용 |
+|------|------|
+| `index.js` | 객체로 할일 관리, 카테고리/우선순위 검색 |
+| `02_destructuring.js` | 객체/배열 구조분해, spread, rest 연습 |
+| `03_classes.js` | Animal/Dog 상속, TodoList 클래스 구현 |
+| `04_json.js` | JSON 직렬화, 깊은 복사, localStorage 시뮬레이션 |
 
-```javascript
-const text = "JavaScript 공부하기";
-console.log(text.includes("공부")); // true
-console.log(text.includes("운동")); // false
-```
+### practice/ (연습 문제)
 
-## 문제 (Problem)
+| 파일 | 내용 |
+|------|------|
+| `practice.js` | 기본 객체 연습 |
+| `practice-extra.js` | Student 클래스, 장바구니 객체, API 응답 구조분해, CSV→JSON 변환 |
 
-> **"할일에 날짜, 우선순위, 카테고리를 넣고 검색하자"**
-
-Day 02에서 만든 할일 앱을 확장하여, 각 할일을 **객체**로 관리합니다. 다음 요구사항을 만족하는 프로그램을 작성하세요:
-
-1. `addTodo(title, priority, category)` - 할일을 객체로 생성하여 추가합니다.
-   - 객체에는 `id`, `title`, `done`, `priority`('high'/'medium'/'low'), `category`, `createdAt`(Date 객체) 속성이 포함됩니다.
-2. `completeTodo(id)` - ID로 할일을 찾아 완료 처리합니다.
-3. `findByCategory(category)` - 카테고리별로 할일을 필터링합니다.
-4. `findByPriority(priority)` - 우선순위별로 할일을 필터링합니다.
-5. `searchTodos(keyword)` - 키워드로 할일 제목을 검색합니다.
-6. `getTodoSummary()` - 각 할일을 요약 문자열로 변환합니다.
-7. `printTodos()` - 모든 할일을 보기 좋게 출력합니다.
-
-### 예상 출력
-
-```
-=== 할일 관리 v3.0 ===
-
-[할일 추가]
-추가됨: JavaScript 공부하기 (우선순위: high, 카테고리: 공부)
-추가됨: 운동하기 (우선순위: medium, 카테고리: 건강)
-추가됨: 프로젝트 코드 리뷰 (우선순위: high, 카테고리: 업무)
-추가됨: 책 읽기 (우선순위: low, 카테고리: 공부)
-추가됨: 장보기 (우선순위: medium, 카테고리: 생활)
-
-[할일 완료]
-완료됨: JavaScript 공부하기
-
-[카테고리: 공부]
-- JavaScript 공부하기 [완료] (high)
-- 책 읽기 (low)
-
-[우선순위: high]
-- JavaScript 공부하기 [완료] (공부)
-- 프로젝트 코드 리뷰 (업무)
-
-[검색: "코드"]
-- 프로젝트 코드 리뷰 (업무, high)
-
-[할일 요약]
-[완료] #1 JavaScript 공부하기 - 공부 (high)
-[ ] #2 운동하기 - 건강 (medium)
-[ ] #3 프로젝트 코드 리뷰 - 업무 (high)
-[ ] #4 책 읽기 - 공부 (low)
-[ ] #5 장보기 - 생활 (medium)
-```
-
-## 힌트
-
-- `filter`는 조건에 맞는 **모든** 요소를 배열로 반환합니다.
-- `find`는 조건에 맞는 **첫 번째** 요소 하나만 반환합니다.
-- `map`은 배열의 각 요소를 **변환**하여 새 배열을 만듭니다.
-- 문자열의 `includes()` 메서드로 키워드 포함 여부를 확인할 수 있습니다.
-- `new Date()`는 현재 시간으로 Date 객체를 생성합니다.
+---
 
 ## 실행 방법
 
-`starter/index.js` 파일을 수정한 후, 터미널에서 다음 명령어를 실행하세요:
-
 ```bash
-node index.js
+node starter/index.js
+node starter/02_destructuring.js
+node starter/03_classes.js
+node starter/04_json.js
+node practice/practice-extra.js
 ```
 
-완성된 코드와 비교하고 싶다면 `solution/index.js`를 확인하세요:
+---
 
-```bash
-node solution/index.js
-```
+## 정리
+
+| 개념 | 핵심 |
+|------|------|
+| 구조분해 | `const { a, b } = obj` / `const [x, y] = arr` |
+| Spread | `{ ...obj }` 펼치기, 병합, 얕은 복사 |
+| Rest | `...rest`로 나머지 모으기 |
+| 클래스 | `class`, `extends`, `super`, `#private`, `static` |
+| JSON | `stringify`/`parse`, 깊은 복사는 `structuredClone` |
+
+> **다음 시간**: Day 04 - 비동기 프로그래밍 (Promise, async/await, 에러 처리)

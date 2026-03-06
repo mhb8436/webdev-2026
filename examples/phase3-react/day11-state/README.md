@@ -1,99 +1,117 @@
-# Day 11 - 할일 추가/삭제 기능 (4/16)
+# Day 11 - useState로 상태 관리 (CRUD)
+
+> **Phase 3: React** | 학습일: 11일차
+
+---
 
 ## 학습 목표
 
-- `useState` 훅을 사용하여 컴포넌트 상태를 관리할 수 있다
-- 이벤트 핸들링(`onClick`, `onChange`, `onSubmit`)을 구현할 수 있다
-- 불변성을 유지하면서 상태를 업데이트할 수 있다
+- `useState` 훅으로 컴포넌트 상태를 관리한다
+- 불변성(Immutability)을 유지하며 배열/객체를 업데이트한다
+- CRUD(추가/조회/수정/삭제) 패턴을 구현한다
+- 이벤트 핸들링(`onClick`, `onChange`, `onSubmit`)을 구현한다
+- 파생 상태(derived state)를 계산한다
 
-## 문제 (Problem)
-
-**"useState로 할일을 동적으로 추가하고 삭제하자"**
-
-Day 10에서 분리한 컴포넌트들에 실제 동작하는 상태 관리 로직을 추가합니다.
-사용자가 할일을 추가, 삭제, 완료 토글할 수 있는 기능을 구현합니다.
+---
 
 ## 핵심 개념
 
-### useState
-React에서 컴포넌트의 상태를 관리하는 훅(Hook)입니다.
+### 1. useState
 
 ```tsx
-const [상태값, 상태변경함수] = useState<타입>(초기값);
+const [todos, setTodos] = useState<Todo[]>([]);
+const [inputValue, setInputValue] = useState("");
 ```
 
-### 불변성 (Immutability)
-React에서 상태를 업데이트할 때는 기존 배열/객체를 직접 수정하지 않고,
-새로운 배열/객체를 만들어서 교체해야 합니다.
+### 2. 불변 업데이트 패턴
 
 ```tsx
-// 올바른 방법 - 새 배열 생성
-setTodos([...todos, newTodo]);
+// 추가
+setTodos([...todos, { id: nextId, title, done: false }]);
 
-// 잘못된 방법 - 기존 배열 직접 수정
-todos.push(newTodo); // React가 변경을 감지하지 못함
+// 삭제
+setTodos(todos.filter(t => t.id !== id));
+
+// 수정 (특정 항목의 속성 변경)
+setTodos(todos.map(t =>
+  t.id === id ? { ...t, done: !t.done } : t
+));
+
+// 이미 있으면 수량+1, 없으면 새로 추가
+setCartItems(prev => {
+  const existing = prev.find(item => item.id === product.id);
+  if (existing) {
+    return prev.map(item =>
+      item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+    );
+  }
+  return [...prev, { ...product, quantity: 1 }];
+});
 ```
 
-### 이벤트 핸들링
+### 3. 파생 상태
 
 ```tsx
-// onClick 이벤트
-<button onClick={() => handleDelete(id)}>삭제</button>
+// 상태에서 계산되는 값 (별도의 state로 관리하지 않음)
+const completedCount = todos.filter(t => t.done).length;
+const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+const formatPrice = (price: number) => new Intl.NumberFormat('ko-KR').format(price) + '원';
+```
 
-// onChange 이벤트
-<input onChange={(e) => setTitle(e.target.value)} />
+### 4. 이벤트 핸들링
 
-// onSubmit 이벤트
+```tsx
+// 폼 제출
 <form onSubmit={(e) => {
-  e.preventDefault();
-  handleAdd(title);
+  e.preventDefault();      // 페이지 리로드 방지
+  handleAdd(inputValue);
+  setInputValue("");
 }}>
+
+// 입력
+<input value={inputValue} onChange={(e) => setInputValue(e.target.value)} />
+
+// 클릭
+<button onClick={() => handleDelete(id)}>삭제</button>
 ```
+
+---
+
+## 실습 파일
+
+### starter/ (직접 구현)
+
+| 파일 | 내용 |
+|------|------|
+| `src/App.tsx` | useState로 Todo CRUD 구현 |
+| `src/components/TodoApp.tsx` | 할일 추가/삭제/토글/통계 |
+| `src/components/ShoppingCart.tsx` | 장바구니 (복잡한 상태: 수량 증감, 합계 계산) |
+
+### practice/ (연습 문제)
+
+| 파일 | 내용 |
+|------|------|
+| `App.tsx` | 기본 CRUD 연습 |
+
+---
 
 ## 실행 방법
 
 ```bash
-cd starter    # 또는 cd solution
-npm install
-npm run dev
+cd starter && npm install && npm run dev
 ```
 
-## 실습 안내
+---
 
-### starter 폴더
+## 정리
 
-`src/App.tsx` 파일의 TODO 주석을 따라 다음 기능을 구현하세요:
+| 개념 | 핵심 |
+|------|------|
+| useState | `const [value, setValue] = useState(초기값)` |
+| 추가 | `[...prev, newItem]` (spread) |
+| 삭제 | `prev.filter(item => item.id !== id)` |
+| 수정 | `prev.map(item => item.id === id ? {...item, ...변경} : item)` |
+| 파생 상태 | `filter`, `reduce`로 계산 (별도 state X) |
+| 불변성 | 원본을 직접 수정하지 않고 새 객체/배열 생성 |
 
-1. `useState`로 `todos` 상태를 관리하세요
-2. `handleAdd` 함수: 새 할일을 배열에 추가
-3. `handleDelete` 함수: 해당 id의 할일을 배열에서 제거
-4. `handleToggle` 함수: 해당 id의 할일 완료 상태를 반전
-
-### solution 폴더
-
-정답 코드가 포함되어 있습니다. 막히는 부분이 있을 때 참고하세요.
-
-## 주요 문법 정리
-
-### 배열에 항목 추가
-```tsx
-setTodos([...todos, { id: nextId, title, done: false }]);
-```
-
-### 배열에서 항목 제거
-```tsx
-setTodos(todos.filter(todo => todo.id !== id));
-```
-
-### 배열 항목의 속성 변경
-```tsx
-setTodos(todos.map(todo =>
-  todo.id === id ? { ...todo, done: !todo.done } : todo
-));
-```
-
-## 참고 자료
-
-- [React 공식 문서 - useState](https://react.dev/reference/react/useState)
-- [React 공식 문서 - 이벤트에 응답하기](https://react.dev/learn/responding-to-events)
-- [React 공식 문서 - 상태 업데이트하기](https://react.dev/learn/updating-arrays-in-state)
+> **다음 시간**: Day 12 - 필터링, 검색, 정렬, 조건부 렌더링

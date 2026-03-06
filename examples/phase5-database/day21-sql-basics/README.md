@@ -1,121 +1,150 @@
-# Day 21 - SQL 기본
+# Day 21 - SQL 기본: DDL과 DML
+
+> **Phase 5: Database** | 학습일: 21일차
+
+---
 
 ## 학습 목표
 
-- CREATE TABLE 문으로 테이블을 생성할 수 있다
-- INSERT 문으로 데이터를 삽입할 수 있다
-- SELECT 문으로 데이터를 조회할 수 있다
-- UPDATE 문으로 데이터를 수정할 수 있다
-- DELETE 문으로 데이터를 삭제할 수 있다
-- WHERE 절을 사용하여 조건부 조회를 할 수 있다
-- 기본 자료형(INTEGER, TEXT, BOOLEAN 등)을 이해한다
+- CREATE TABLE 문으로 테이블을 생성한다
+- INSERT, SELECT, UPDATE, DELETE로 CRUD를 수행한다
+- WHERE 절로 조건부 조회를 한다
+- SQLite와 PostgreSQL의 기본 자료형을 이해한다
+- Node.js에서 better-sqlite3, pg로 DB에 연결한다
 
-## 문제
-
-> "할일 테이블을 만들고 데이터를 넣고 꺼내보자"
-
-할일 관리 앱의 기초가 되는 데이터베이스 테이블을 설계하고,
-SQL의 기본 명령어(DDL, DML)를 사용하여 데이터를 생성, 조회, 수정, 삭제해봅니다.
+---
 
 ## 핵심 개념
 
-### DDL (Data Definition Language) - 데이터 정의어
+### 1. DDL (Data Definition Language)
 
-| 명령어 | 설명 | 예시 |
-|--------|------|------|
-| CREATE TABLE | 테이블 생성 | `CREATE TABLE todos (...)` |
-| DROP TABLE | 테이블 삭제 | `DROP TABLE todos` |
-| ALTER TABLE | 테이블 수정 | `ALTER TABLE todos ADD COLUMN ...` |
+```sql
+CREATE TABLE todos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  done INTEGER DEFAULT 0,
+  priority TEXT DEFAULT 'medium',
+  category TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-### DML (Data Manipulation Language) - 데이터 조작어
+### 2. DML (Data Manipulation Language)
 
-| 명령어 | 설명 | 예시 |
-|--------|------|------|
-| INSERT | 데이터 삽입 | `INSERT INTO todos VALUES (...)` |
-| SELECT | 데이터 조회 | `SELECT * FROM todos` |
-| UPDATE | 데이터 수정 | `UPDATE todos SET done = 1 WHERE id = 1` |
-| DELETE | 데이터 삭제 | `DELETE FROM todos WHERE id = 1` |
+```sql
+-- 삽입
+INSERT INTO todos (title, priority) VALUES ('공부하기', 'high');
 
-### SQLite 기본 자료형
+-- 조회
+SELECT * FROM todos WHERE done = 0;
+
+-- 수정
+UPDATE todos SET done = 1 WHERE id = 1;
+
+-- 삭제
+DELETE FROM todos WHERE id = 1;
+
+-- 집계
+SELECT COUNT(*) FROM todos WHERE done = 1;
+```
+
+### 3. SQLite 자료형
 
 | 자료형 | 설명 | 예시 |
 |--------|------|------|
 | INTEGER | 정수 | `id INTEGER PRIMARY KEY` |
 | TEXT | 문자열 | `title TEXT NOT NULL` |
 | REAL | 실수 | `price REAL` |
-| BLOB | 바이너리 | `image BLOB` |
 | NULL | NULL 값 | - |
 
 > SQLite는 BOOLEAN 타입이 없으므로 INTEGER(0 또는 1)로 대체합니다.
 
-## 프로젝트 구조
+### 4. Node.js에서 SQLite 연결 (better-sqlite3)
 
+```javascript
+const Database = require('better-sqlite3');
+const db = new Database('todos.db');
+
+// 테이블 생성
+db.exec(`CREATE TABLE IF NOT EXISTS todos (...)`);
+
+// Prepared Statement (SQL 인젝션 방지)
+const stmt = db.prepare('SELECT * FROM todos WHERE id = ?');
+const todo = stmt.get(1);
+
+// 삽입
+const insert = db.prepare('INSERT INTO todos (title) VALUES (?)');
+const result = insert.run('새 할일');
+console.log(result.lastInsertRowid);
 ```
-day21-sql-basics/
-├── README.md
-├── starter/
-│   ├── 01_ddl.sql          # 테이블 생성 (직접 작성)
-│   └── 02_dml.sql          # 데이터 조작 (직접 작성)
-└── solution/
-    ├── 01_ddl.sql          # 테이블 생성 (정답)
-    └── 02_dml.sql          # 데이터 조작 (정답)
+
+### 5. Node.js에서 PostgreSQL 연결 (pg)
+
+```javascript
+const { Pool } = require('pg');
+const pool = new Pool({
+  host: 'localhost',
+  port: 5432,
+  database: 'todo_db',
+  user: 'postgres',
+  password: 'password'
+});
+
+const { rows } = await pool.query('SELECT * FROM todos');
+// 파라미터 바인딩: $1, $2, ...
+await pool.query('INSERT INTO todos (title) VALUES ($1)', ['새 할일']);
 ```
+
+---
+
+## 실습 파일
+
+### starter/ (직접 구현)
+
+| 파일 | 내용 |
+|------|------|
+| `01_ddl.sql` | 테이블 생성 (CREATE TABLE) |
+| `02_dml.sql` | 데이터 조작 (INSERT, SELECT, UPDATE, DELETE) |
+| `03_sqlite_connect.js` | Node.js + better-sqlite3 연결 |
+| `04_postgres_connect.js` | Node.js + pg 연결 |
+
+### solution/ (완성 코드)
+
+| 파일 | 내용 |
+|------|------|
+| `01_ddl.sql` | 완성된 DDL |
+| `02_dml.sql` | 완성된 DML |
+| `03_sqlite_connect.js` | SQLite CRUD 예제 |
+| `04_postgres_connect.js` | PostgreSQL CRUD 예제 |
+
+---
 
 ## 실행 방법
 
-### SQLite 사용 (권장)
-
 ```bash
-# 1. DDL 실행 - 테이블 생성
+# SQL 파일 실행 (SQLite)
 sqlite3 todo.db < solution/01_ddl.sql
-
-# 2. DML 실행 - 데이터 조작
 sqlite3 todo.db < solution/02_dml.sql
 
-# 3. 대화형 모드로 직접 확인
-sqlite3 todo.db
-sqlite> .tables
-sqlite> SELECT * FROM todos;
-sqlite> .quit
+# Node.js로 SQLite 연결
+npm install
+node solution/03_sqlite_connect.js
+
+# Node.js로 PostgreSQL 연결
+node solution/04_postgres_connect.js
 ```
 
-### MySQL 사용
+---
 
-```bash
-# 1. 데이터베이스 생성
-mysql -u root -p -e "CREATE DATABASE todo_app;"
+## 정리
 
-# 2. SQL 파일 실행
-mysql -u root -p todo_app < solution/01_ddl.sql
-mysql -u root -p todo_app < solution/02_dml.sql
-```
+| 개념 | 핵심 |
+|------|------|
+| DDL | CREATE TABLE, DROP TABLE, ALTER TABLE |
+| DML | INSERT, SELECT, UPDATE, DELETE |
+| WHERE | 조건부 조회 (`WHERE done = 0`) |
+| better-sqlite3 | Node.js에서 SQLite 사용 (동기 방식) |
+| pg | Node.js에서 PostgreSQL 사용 (비동기 방식) |
+| Prepared Statement | SQL 인젝션 방지 (`?` 또는 `$1`) |
 
-## 학습 단계
-
-### 1단계: 테이블 생성 (DDL)
-
-`starter/01_ddl.sql` 파일을 열고 todos 테이블을 생성하세요.
-
-필요한 컬럼:
-- `id` - 정수, 기본키, 자동증가
-- `title` - 문자열(255), NULL 불가
-- `done` - 불리언(SQLite: INTEGER), 기본값 0(미완료)
-- `priority` - 문자열(10), 기본값 'medium'
-- `category` - 문자열(50)
-- `created_at` - 날짜시간, 기본값 현재시간
-
-### 2단계: 데이터 조작 (DML)
-
-`starter/02_dml.sql` 파일을 열고 다음을 수행하세요:
-1. 5개의 할일 데이터를 INSERT
-2. 전체 할일 조회 (SELECT)
-3. 조건부 조회 (WHERE)
-4. 할일 완료 처리 (UPDATE)
-5. 할일 삭제 (DELETE)
-6. 집계 함수 사용 (COUNT)
-
-## 참고 자료
-
-- [SQLite 공식 문서](https://www.sqlite.org/docs.html)
-- [SQL 자습서 - W3Schools](https://www.w3schools.com/sql/)
-- [SQLite 자료형](https://www.sqlite.org/datatype3.html)
+> **다음 시간**: Day 22 - SQL 심화 (GROUP BY, JOIN, 서브쿼리)
